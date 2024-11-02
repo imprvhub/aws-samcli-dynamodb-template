@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: MoodFwd Analysis Application
+
+Parameters:
+  DynamoDBTableName:
+    Type: String
+    Default: <YOUR_DYNAMO_TABLE_NAME>
+  S3BucketName:
+    Type: String
+    Default: <YOUR_S3_BUCKET_NAME>
+
+Resources:
+  # DynamoDB Table
+  YourDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Ref DynamoDBTableName
+      AttributeDefinitions:
+        - AttributeName: LogID
+          AttributeType: S
+        - AttributeName: Timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LogID
+          KeyType: HASH
+        - AttributeName: Timestamp
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  # S3 Bucket
+  YourS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref S3BucketName
+      VersioningConfiguration:
+        Status: Enabled
+
+  # Lambda Function
+  TextAnalysisFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/text_analysis/
+      Handler: lambda_handler.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref YourDynamoDBTable
+        - S3CrudPolicy:
+            BucketName: !Ref YourS3Bucket
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref YourDynamoDBTable
+          S3_BUCKET: !Ref YourS3Bucket
+      Events:
+        TextAnalysisApi:
+          Type: Api
+          Properties:
+            Path: /analyze
+            Method: post
+
+Outputs:
+  DynamoDBTableName:
+    Description: DynamoDB Table Name
+    Value: !Ref YourDynamoDBTable
+  S3BucketName:
+    Description: S3 Bucket Name
+    Value: !Ref YourS3Bucket
+  TextAnalysisFunctionName:
+    Description: Lambda Function Name
+    Value: !Ref TextAnalysisFunction

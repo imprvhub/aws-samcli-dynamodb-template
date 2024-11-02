@@ -1,0 +1,9 @@
+
+{
+    "logId": "12345",
+    "timestamp": "2024-11-01T00:00:00Z",
+    "originalText": "Texto original",
+    "analyzedText": "Texto analizado por IA",
+    "sentimentScore": 0.5,
+    "sentimentLabel": "Neutral"
+}
